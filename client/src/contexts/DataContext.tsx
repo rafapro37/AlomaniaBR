@@ -9,6 +9,7 @@ export interface Product {
   category: string;
   brand: string;
   model: string;
+  imei?: string;
   costPrice: number;
   salePrice: number;
   quantity: number;
@@ -146,7 +147,7 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 
 const toProduct = (r: any): Product => ({
   id: r.id, code: r.code, name: r.name, ean: r.ean,
-  category: r.category, brand: r.brand, model: r.model,
+  category: r.category, brand: r.brand, model: r.model, imei: r.imei,
   costPrice: r.cost_price, salePrice: r.sale_price,
   quantity: r.quantity, images: r.images || [], createdAt: r.created_at,
 });
@@ -267,6 +268,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     await supabase.from("products").insert([{
       code: product.code, name: product.name, ean: product.ean,
       category: product.category, brand: product.brand, model: product.model,
+      imei: product.imei || null,
       cost_price: product.costPrice, sale_price: product.salePrice,
       quantity: product.quantity, images: product.images,
     }]);
@@ -280,6 +282,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (updates.category !== undefined) row.category = updates.category;
     if (updates.brand !== undefined) row.brand = updates.brand;
     if (updates.model !== undefined) row.model = updates.model;
+    if (updates.imei !== undefined) row.imei = updates.imei || null;
     if (updates.costPrice !== undefined) row.cost_price = updates.costPrice;
     if (updates.salePrice !== undefined) row.sale_price = updates.salePrice;
     if (updates.quantity !== undefined) row.quantity = updates.quantity;

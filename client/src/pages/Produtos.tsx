@@ -13,9 +13,6 @@ export default function Produtos() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("Todos");
   const [showModal, setShowModal] = useState(false);
-  const [showBipagemModal, setShowBipagemModal] = useState(false);
-  const [bipagemEAN, setBipagemEAN] = useState("");
-  const [bipagemResult, setBipagemResult] = useState<Product | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -25,6 +22,7 @@ export default function Produtos() {
     category: "",
     brand: "",
     model: "",
+    imei: "",
     costPrice: "",
     salePrice: "",
     quantity: "",
@@ -32,6 +30,7 @@ export default function Produtos() {
   });
 
   const categories = ["Todos", ...Array.from(new Set(products.map(p => p.category).filter(Boolean))).sort()];
+  const isCelular = formData.category.trim().toLowerCase() === "celular";
 
   const filteredProducts = products.filter((product) => {
     const matchesSearch =
@@ -64,6 +63,15 @@ export default function Produtos() {
       }
     }
 
+    if (isCelular) {
+      const imei = formData.imei.trim();
+      if (!imei) {
+        newErrors.imei = "IMEI é obrigatório para celulares";
+      } else if (!/^\d{15}$/.test(imei)) {
+        newErrors.imei = "IMEI deve conter 15 dígitos numéricos";
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -80,6 +88,7 @@ export default function Produtos() {
         category: formData.category,
         brand: formData.brand,
         model: formData.model,
+        imei: isCelular ? formData.imei.trim() : "",
         costPrice: parseFloat(formData.costPrice),
         salePrice: parseFloat(formData.salePrice),
         quantity: parseInt(formData.quantity),
@@ -93,6 +102,7 @@ export default function Produtos() {
         category: formData.category,
         brand: formData.brand,
         model: formData.model,
+        imei: isCelular ? formData.imei.trim() : "",
         costPrice: parseFloat(formData.costPrice),
         salePrice: parseFloat(formData.salePrice),
         quantity: parseInt(formData.quantity),
@@ -111,6 +121,7 @@ export default function Produtos() {
       category: "",
       brand: "",
       model: "",
+      imei: "",
       costPrice: "",
       salePrice: "",
       quantity: "",
@@ -127,6 +138,7 @@ export default function Produtos() {
       category: product.category,
       brand: product.brand,
       model: product.model,
+      imei: product.imei || "",
       costPrice: product.costPrice.toString(),
       salePrice: product.salePrice.toString(),
       quantity: product.quantity.toString(),
@@ -140,24 +152,6 @@ export default function Produtos() {
     if (window.confirm("Tem certeza que deseja deletar este produto?")) {
       deleteProduct(id);
     }
-  };
-
-  const handleBipagem = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      const ean = bipagemEAN.trim();
-      const produto = products.find(
-        (p) => p.code.toLowerCase() === ean.toLowerCase()
-      );
-      setBipagemResult(produto || null);
-      setBipagemEAN("");
-    }
-  };
-
-  const abrirBipagem = () => {
-    setShowBipagemModal(true);
-    setBipagemEAN("");
-    setBipagemResult(null);
   };
 
   return (
@@ -212,12 +206,6 @@ export default function Produtos() {
               ))}
             </select>
           </div>
-          <button
-            onClick={abrirBipagem}
-            className="px-4 py-2 bg-[#1E3A8A] hover:bg-[#1E40AF] text-white font-medium rounded-md transition-all duration-200 active:scale-95"
-          >
-            Bipar
-          </button>
           <Link
             href="/bipagem"
             className="px-4 py-2 bg-[#F59E0B] hover:bg-[#D97706] text-white font-medium rounded-md transition-all duration-200 cursor-pointer flex items-center gap-2 active:scale-95"
@@ -461,6 +449,28 @@ export default function Produtos() {
                   )}
                 </div>
 
+                {isCelular && (
+                  <div className="md:col-span-2">
+                    <label className="text-sm text-[#94A3B8] block mb-2">
+                      IMEI do Aparelho *
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.imei}
+                      onChange={(e) =>
+                        setFormData({ ...formData, imei: e.target.value.replace(/\D/g, "").slice(0, 15) })
+                      }
+                      placeholder="Ex: 123456789012345"
+                      className={`w-full bg-[#0F172A] text-white px-4 py-2 rounded-lg border font-mono ${
+                        errors.imei ? "border-[#EF4444]" : "border-[#334155]"
+                      } focus:border-[#FFC107] outline-none transition-colors`}
+                    />
+                    {errors.imei && (
+                      <p className="text-[#EF4444] text-xs mt-1">{errors.imei}</p>
+                    )}
+                  </div>
+                )}
+
                 <div>
                   <label className="text-sm text-[#94A3B8] block mb-2">
                     Modelo *
@@ -590,55 +600,6 @@ export default function Produtos() {
                 className="flex-1 bg-[#FFC107] text-[#0F172A] font-semibold py-2 rounded-lg hover:bg-[#FFD54F] transition-colors"
               >
                 {editingId ? "Atualizar" : "Cadastrar"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal de Bipagem Rápida */}
-      {showBipagemModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-[#1E293B] rounded-lg p-6 w-96 border border-[#334155]">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold text-white">Bipar Produto</h3>
-              <button
-                onClick={() => setShowBipagemModal(false)}
-                className="text-[#94A3B8] hover:text-white"
-              >
-                <X size={24} />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <input
-                type="text"
-                placeholder="Digite ou aponte o código de barras..."
-                value={bipagemEAN}
-                onChange={(e) => setBipagemEAN(e.target.value)}
-                onKeyPress={handleBipagem}
-                autoFocus
-                className="w-full bg-[#0F172A] text-white px-4 py-3 rounded-lg border border-[#334155] focus:border-[#FFC107] outline-none transition-colors font-mono text-lg"
-              />
-
-              {bipagemResult ? (
-                <div className="bg-green-900/30 border border-green-500 rounded-lg p-4">
-                  <p className="text-green-200 font-semibold text-sm mb-2">Produto Encontrado!</p>
-                  <p className="text-white font-bold">{bipagemResult.name}</p>
-                  <p className="text-[#94A3B8] text-sm">Código: {bipagemResult.code}</p>
-                  <p className="text-[#94A3B8] text-sm">Estoque: {bipagemResult.quantity}</p>
-                </div>
-              ) : bipagemEAN ? (
-                <div className="bg-red-900/30 border border-red-500 rounded-lg p-4">
-                  <p className="text-red-200 text-sm">Produto não encontrado</p>
-                </div>
-              ) : null}
-
-              <button
-                onClick={() => setShowBipagemModal(false)}
-                className="w-full bg-[#64748B] text-white font-semibold py-2 rounded-lg hover:bg-[#475569] transition-colors"
-              >
-                Fechar
               </button>
             </div>
           </div>

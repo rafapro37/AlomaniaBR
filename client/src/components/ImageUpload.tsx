@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Upload, X, Eye } from "lucide-react";
+import { Upload, X, Eye, ZoomIn } from "lucide-react";
 
 interface ImageUploadProps {
   onImageAdd: (image: { id: string; url: string; name: string }) => void;
@@ -128,6 +128,14 @@ export function ImageGallery({ images, onRemove }: ImageGalleryProps) {
               className="w-full h-24 object-cover rounded-lg border border-[#334155] cursor-pointer hover:border-[#FFC107] transition-colors"
               onClick={() => setSelectedImage(image.url)}
             />
+            <button
+              type="button"
+              onClick={() => setSelectedImage(image.url)}
+              title="Ampliar imagem"
+              className="absolute bottom-1 right-1 bg-black/60 text-white p-1.5 rounded-full hover:bg-[#FFC107] hover:text-[#0F172A] transition-colors"
+            >
+              <ZoomIn size={14} />
+            </button>
             <button
               onClick={() => onRemove(image.id)}
               className="absolute top-1 right-1 bg-[#EF4444] text-white p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"
